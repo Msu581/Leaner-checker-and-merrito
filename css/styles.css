@@ -1,0 +1,151 @@
+/* Colours are the ones used in the exported Excel report, so a row reads the same on screen and on paper. */
+:root {
+  --ink: #16262c;
+  --ink-2: #5a6b71;
+  --teal: #0f5e6e;
+  --teal-2: #0b4854;
+  --line: #c9d4d3;
+  --paper: #f3f6f6;
+  --sheet: #ffffff;
+  --head: #e0edef;
+  --ok-bg: #c6efce; --ok-fg: #006100;
+  --minor-bg: #e2efda; --minor-fg: #375623;
+  --rev-bg: #ffeb9c; --rev-fg: #7f6000;
+  --bad-bg: #ffc7ce; --bad-fg: #9c0006;
+  --skip-bg: #ededed; --skip-fg: #595959;
+  --font: "Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  font: 15px/1.45 var(--font);
+  color: var(--ink);
+  background: var(--paper);
+  font-variant-numeric: tabular-nums;
+  padding-bottom: 44px; /* status bar */
+}
+
+/* ------------------------------------------------------------ header and tabs */
+.top {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 32px;
+  padding: 14px 24px 0; background: var(--sheet); border-bottom: 1px solid var(--line);
+}
+.brand h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+.brand p { margin: 0 0 12px; color: var(--ink-2); font-size: 13px; }
+.tabs { display: flex; gap: 2px; flex-wrap: wrap; }
+.tabs button {
+  font: inherit; background: none; border: 1px solid transparent; border-bottom: none;
+  padding: 9px 16px; color: var(--ink-2); cursor: pointer; border-radius: 6px 6px 0 0; margin-bottom: -1px;
+}
+.tabs button[aria-selected="true"] { background: var(--paper); border-color: var(--line); color: var(--ink); font-weight: 700; }
+.tabs button:hover { color: var(--ink); }
+
+main { padding: 18px 24px; max-width: 1500px; margin: 0 auto; }
+.tab { display: flex; flex-direction: column; gap: 14px; }
+.tab[hidden] { display: none; }
+
+/* ------------------------------------------------------------ panels */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 980px) { .grid2 { grid-template-columns: 1fr; } }
+.panel {
+  margin: 0; min-width: 0; background: var(--sheet); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px 12px;
+}
+.panel legend { font-weight: 700; padding: 0 6px; }
+.panel legend .hint { font-weight: 400; margin-left: 4px; }
+.drop.over { outline: 2px dashed var(--teal); outline-offset: -4px; background: #f4fafb; }
+.hint { color: var(--ink-2); font-size: 13px; margin: 6px 0; }
+.muted { color: var(--ink-2); }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 6px 0; }
+.spacer { flex: 1; }
+.form { display: grid; grid-template-columns: max-content 1fr; gap: 6px 12px; align-items: center; }
+.slider { display: flex; align-items: center; gap: 8px; }
+.slider input { flex: 1; accent-color: var(--teal); }
+.slider output { min-width: 3.2em; text-align: right; font-weight: 700; }
+.check { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+.check input { accent-color: var(--teal); }
+.actions { display: flex; justify-content: flex-end; }
+.banner { margin: 12px 24px 0; padding: 10px 14px; border-radius: 6px; }
+.banner.bad { background: var(--bad-bg); color: var(--bad-fg); }
+
+/* ------------------------------------------------------------ controls */
+button, .btn, select, input[type="text"], input[type="number"] {
+  font: inherit; font-size: 14px; color: var(--ink);
+}
+button, .btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--sheet); border: 1px solid var(--line); border-radius: 4px; padding: 6px 12px; cursor: pointer;
+}
+button:hover, .btn:hover { border-color: var(--ink-2); }
+button.primary { background: var(--teal); border-color: var(--teal); color: #fff; font-weight: 700; padding: 8px 18px; }
+button.primary:hover { background: var(--teal-2); }
+button:disabled { opacity: .5; cursor: default; }
+select, input[type="text"], input[type="number"] {
+  border: 1px solid var(--line); border-radius: 4px; padding: 5px 8px; background: var(--sheet); max-width: 100%;
+}
+input[type="number"] { width: 6.5em; }
+:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.btn:focus-within { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+/* ------------------------------------------------------------ column mapping */
+.mapping { display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content; gap: 2px 10px; align-items: center; }
+.mapping .lbl { font-weight: 700; }
+.mapping .conf { font-size: 13px; white-space: nowrap; }
+.mapping .samp { grid-column: 2 / 4; color: var(--ink-2); font-size: 12.5px; margin-bottom: 6px; min-height: 1em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conf-high { color: #2e7a4d; } .conf-medium { color: #93600e; } .conf-low { color: #b03a2e; }
+.conf-manual { color: var(--teal); } .conf-none { color: #777; }
+
+/* ------------------------------------------------------------ tables */
+.tablewrap { overflow: auto; border: 1px solid var(--line); border-radius: 4px; background: var(--sheet); }
+.tablewrap.short { max-height: 260px; }
+.tablewrap.mid { max-height: 300px; }
+.tablewrap.tall { max-height: calc(100vh - 290px); min-height: 220px; }
+table.data { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+table.data th {
+  position: sticky; top: 0; z-index: 1; background: var(--teal); color: #fff; font-weight: 700;
+  text-align: left; padding: 6px 8px; white-space: nowrap;
+}
+table.data td { padding: 4px 8px; border-bottom: 1px solid #e3eaea; vertical-align: top; }
+table.data tbody tr { cursor: default; }
+table.data tbody tr:hover td { filter: brightness(.97); }
+table.data tbody tr.sel td { box-shadow: inset 0 0 0 9999px rgba(15, 94, 110, .14); }
+table.data td.num { text-align: right; }
+.tablewrap.short td { white-space: nowrap; }
+table.preview td { white-space: nowrap; max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+table.preview tr.hdr td { background: var(--head); font-weight: 700; }
+table.data td.empty { color: var(--ink-2); text-align: center; padding: 18px; }
+tr.ok td { background: var(--ok-bg); } tr.minor td { background: var(--minor-bg); }
+tr.review td { background: var(--rev-bg); } tr.bad td { background: var(--bad-bg); } tr.skip td { background: var(--skip-bg); }
+
+/* result tallies */
+.tally { display: flex; flex-wrap: wrap; gap: 8px 36px; }
+.tally div { display: flex; flex-direction: column; }
+.tally b { font-size: 30px; line-height: 1.1; }
+.tally span { color: var(--ink-2); font-size: 13px; }
+
+/* status chips (same fills as the report) */
+.chip { display: inline-block; padding: 1px 7px; border-radius: 3px; font-weight: 700; font-size: 12.5px; }
+.chip.ok { background: var(--ok-bg); color: var(--ok-fg); } .chip.minor { background: var(--minor-bg); color: var(--minor-fg); }
+.chip.review { background: var(--rev-bg); color: var(--rev-fg); } .chip.bad { background: var(--bad-bg); color: var(--bad-fg); }
+.chip.skip { background: var(--skip-bg); color: var(--skip-fg); }
+
+/* ------------------------------------------------------------ status bar */
+.status {
+  position: fixed; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 12px;
+  padding: 8px 24px; background: var(--ink); color: #eef3f3; font-size: 13.5px; z-index: 5;
+}
+.status .hint { color: #a9babd; margin: 0; }
+.status progress { width: 160px; accent-color: #7cc3cf; }
+
+/* ------------------------------------------------------------ dialog */
+dialog { border: 1px solid var(--line); border-radius: 8px; padding: 0; max-width: min(920px, 94vw); width: 100%; color: var(--ink); }
+dialog::backdrop { background: rgba(22, 38, 44, .45); }
+dialog form { padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; }
+dialog h2 { font-size: 17px; margin: 0; }
+dialog .kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; }
+dialog .kv dt { font-weight: 700; } dialog .kv dd { margin: 0; word-break: break-word; }
+dialog .form input[type="text"], dialog .form select { width: 100%; }
+dialog .buttons { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+dialog .warn { color: #93600e; margin: 0; }
+dialog pre { white-space: pre-wrap; margin: 0; font: inherit; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

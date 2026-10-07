@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marksheet Verifier</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect width=%2216%22 height=%2216%22 rx=%223%22 fill=%22%230f5e6e%22/%3E%3Cpath d=%22M4 8.5l2.5 2.5L12 5%22 stroke=%22white%22 stroke-width=%222%22 fill=%22none%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<link rel="stylesheet" href="css/styles.css">
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="vendor/exceljs.min.js"></script>
+<script type="module" src="js/app.js"></script>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <h1>Marksheet Verifier</h1>
+    <p>Files are read in this browser. Nothing is uploaded.</p>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="setup" aria-selected="true">Setup</button>
+    <button role="tab" data-tab="results" aria-selected="false">Results</button>
+    <button role="tab" data-tab="history" aria-selected="false">History</button>
+    <button role="tab" data-tab="meritto" aria-selected="false">Meritto vs Marksheet</button>
+  </nav>
+</header>
+
+<noscript><p class="banner bad">This tool needs JavaScript.</p></noscript>
+<p id="loadError" class="banner bad" hidden></p>
+
+<main>
+<!-- ================================================================ 1 Setup -->
+<section id="tab-setup" class="tab" role="tabpanel">
+  <div class="grid2">
+    <fieldset class="panel drop" id="excelBox" data-drop="excel">
+      <legend>Excel / CSV file</legend>
+      <p id="excelLabel" class="hint">No file chosen. Drop it here or choose it.</p>
+      <div class="row">
+        <label class="btn">Choose Excel file…<input type="file" id="excelInput" accept=".xlsx,.xlsm,.xls,.ods,.csv,.tsv,.txt" hidden></label>
+        <label>Sheet <select id="sheetSelect" disabled></select></label>
+        <label>Header row (0 = none) <input type="number" id="headerRow" min="0" value="0" disabled></label>
+      </div>
+    </fieldset>
+
+    <fieldset class="panel">
+      <legend>Matching settings</legend>
+      <div class="form">
+        <label for="mode">Name matching mode</label>
+        <select id="mode" class="shared-mode"><option value="normal">Normal (fuzzy)</option><option value="strict">Strict (exact)</option></select>
+        <label for="dateOrder">Ambiguous dates (05-07-2006)</label>
+        <select id="dateOrder"><option value="dmy">Day-Month-Year</option><option value="mdy">Month-Day-Year</option></select>
+        <label for="match">Close-match threshold</label>
+        <span class="slider"><input type="range" id="match" min="50" max="100" value="92"><output id="matchOut">92%</output></span>
+        <label for="review">Review threshold</label>
+        <span class="slider"><input type="range" id="review" min="30" max="100" value="75"><output id="reviewOut">75%</output></span>
+      </div>
+      <p id="threshHelp" class="hint"></p>
+      <label class="check"><input type="checkbox" id="titles" class="shared-titles" checked> Ignore titles (Mr, Smt, Shri…) in names</label>
+      <label class="check muted" title="OCR needs the Tesseract program and is only available in the desktop version."><input type="checkbox" disabled> Use OCR for scanned PDFs (desktop version only)</label>
+      <label class="check"><input type="checkbox" id="saveRun" checked> Save each run to History (kept in this browser)</label>
+    </fieldset>
+  </div>
+
+  <div class="grid2">
+    <fieldset class="panel">
+      <legend>Column mapping <span class="hint">auto-detected; change any dropdown to override</span></legend>
+      <div id="mapping" class="mapping"></div>
+      <div class="row">
+        <button type="button" id="detectAgain">Auto-detect again</button>
+        <button type="button" id="detectReset">Reset to auto-detect</button>
+      </div>
+      <p class="hint">* The registration number pairs each PDF with its Excel row (ABC ID if the PDF has no reg. no.).</p>
+    </fieldset>
+
+    <fieldset class="panel drop" data-drop="pdf1">
+      <legend>PDF marksheets <span class="hint">double-click a row to correct what was read</span></legend>
+      <div class="row">
+        <label class="btn">Add PDFs…<input type="file" id="pdfInput1" accept=".pdf,application/pdf" multiple hidden></label>
+        <label class="btn">Add folder…<input type="file" id="folderInput1" webkitdirectory multiple hidden></label>
+        <button type="button" id="removePdf1">Remove selected</button>
+        <button type="button" id="clearPdf1">Clear all</button>
+      </div>
+      <div class="tablewrap short"><table id="pdfTable1" class="data selectable"></table></div>
+      <p class="hint" id="pdfCount1">No PDFs yet. Drop PDF files or a folder here.</p>
+    </fieldset>
+  </div>
+
+  <fieldset class="panel">
+    <legend>Excel preview <span class="hint">mapped columns are named in the heading</span></legend>
+    <div class="tablewrap"><table id="preview" class="data preview"></table></div>
+  </fieldset>
+  <div class="actions"><button type="button" id="runCompare" class="primary">Run comparison</button></div>
+</section>
+
+<!-- ================================================================ 2 Results -->
+<section id="tab-results" class="tab" role="tabpanel" hidden>
+  <div class="tally" id="tally"></div>
+  <div class="row">
+    <label>Show <select id="resFilter"><option>All</option><option>Verified</option><option>Needs review</option><option>Mismatch / not found</option></select></label>
+    <button type="button" id="rerun">Re-run with current settings</button>
+    <span class="spacer"></span>
+    <span class="hint">Double-click a row for details</span>
+    <button type="button" id="exportReport" class="primary">Export Excel report</button>
+  </div>
+  <div class="tablewrap tall"><table id="resTable" class="data"></table></div>
+  <p class="hint" id="unmatchedLabel"></p>
+</section>
+
+<!-- ================================================================ 3 History -->
+<section id="tab-history" class="tab" role="tabpanel" hidden>
+  <div class="row">
+    <button type="button" id="histView">View in Results</button>
+    <button type="button" id="histExport">Export selected to Excel</button>
+    <button type="button" id="histDelete">Delete selected</button>
+    <button type="button" id="histRefresh">Refresh</button>
+    <span class="spacer"></span>
+    <span class="hint">Runs are stored in this browser only. Clearing site data removes them.</span>
+  </div>
+  <div class="tablewrap mid"><table id="histTable" class="data"></table></div>
+  <div class="row">
+    <label>Look up a registration number across all runs <input type="text" id="lookup" size="22"></label>
+    <button type="button" id="lookupBtn">Find</button>
+  </div>
+  <div class="tablewrap mid"><table id="histRecTable" class="data"></table></div>
+</section>
+
+<!-- ================================================================ 4 Meritto -->
+<section id="tab-meritto" class="tab" role="tabpanel" hidden>
+  <div class="grid2">
+    <fieldset class="panel drop" data-drop="mexcel">
+      <legend>1. Meritto Excel file</legend>
+      <p id="mExcelLabel" class="hint">No file chosen. Drop it here or choose it.</p>
+      <div class="row">
+        <label class="btn">Choose Excel file…<input type="file" id="mExcelInput" accept=".xlsx,.xlsm,.xls,.ods,.csv,.tsv,.txt" hidden></label>
+        <label>Sheet <select id="mSheet" disabled></select></label>
+      </div>
+      <div class="row">
+        <label>Header row <input type="number" id="mHeader" min="1" value="1" disabled></label>
+        <label>Last row (0 = all) <input type="number" id="mLast" min="0" value="0"></label>
+      </div>
+    </fieldset>
+    <fieldset class="panel">
+      <legend>Matching <span class="hint">shared with the Excel vs Marksheet tab</span></legend>
+      <div class="form">
+        <label for="mMode">Name matching mode</label>
+        <select id="mMode" class="shared-mode"><option value="normal">Normal (fuzzy)</option><option value="strict">Strict (exact)</option></select>
+      </div>
+      <label class="check"><input type="checkbox" class="shared-titles" checked> Ignore titles (Mr, Smt, Shri…) in names</label>
+      <label class="check muted"><input type="checkbox" disabled> Use OCR for scanned PDFs (desktop version only)</label>
+      <p class="hint">Strict: S R Sahoo and R S Sahoo are different; Deep Chand and Deepchand are different.<br>
+        Normal: small spelling, spacing and word-order differences are accepted.</p>
+    </fieldset>
+  </div>
+  <div class="grid2">
+    <fieldset class="panel">
+      <legend>3. Columns <span class="hint">auto-detected; change any dropdown</span></legend>
+      <div id="mColumns" class="mapping"></div>
+      <div class="row">
+        <button type="button" id="mReset">Reset to auto-detect</button>
+        <span class="hint">* required. Each "Label : value" line is checked separately.</span>
+      </div>
+    </fieldset>
+    <fieldset class="panel drop" data-drop="pdf2">
+      <legend>2. Marksheet PDFs</legend>
+      <div class="row">
+        <label class="btn">Add PDFs…<input type="file" id="pdfInput2" accept=".pdf,application/pdf" multiple hidden></label>
+        <label class="btn">Add folder…<input type="file" id="folderInput2" webkitdirectory multiple hidden></label>
+        <button type="button" id="clearPdf2">Clear all</button>
+      </div>
+      <div class="tablewrap short"><table id="pdfTable2" class="data"></table></div>
+      <p class="hint" id="pdfCount2">No PDFs yet. Drop PDF files or a folder here.</p>
+    </fieldset>
+  </div>
+  <fieldset class="panel">
+    <legend>Results <span class="hint">double-click a row to see details or adjust it by hand</span></legend>
+    <div class="row">
+      <button type="button" id="mRun" class="primary">Run check</button>
+      <button type="button" id="mRecheck">Re-check (keep manual changes)</button>
+      <label>Show <select id="mFilter"></select></label>
+      <span class="spacer"></span>
+      <button type="button" id="mExport" class="primary">Export Excel report</button>
+    </div>
+    <div class="tablewrap tall"><table id="mTable" class="data"></table></div>
+    <p class="hint" id="mTally">No checks yet.</p>
+  </fieldset>
+</section>
+</main>
+
+<footer class="status">
+  <span id="status">Add an Excel file and your PDF marksheets to begin.</span>
+  <progress id="progress" hidden></progress>
+  <span class="spacer"></span>
+  <span class="hint">History: stored in this browser</span>
+</footer>
+
+<dialog id="dialog"><form method="dialog" id="dialogForm"></form></dialog>
+</body>
+</html>
